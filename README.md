@@ -20,6 +20,8 @@
 
 ## 3、数据集
 
+​	数据集标签参考来源：https://github.com/mks0601/NeuralAnnot_RELEASE
+
 ​	采用human3.6m或gta_human等数据集，数据处理流程：
 
 标签中的pose参数+smplx --> joint3d --> 结合相机参数，投影得到2D关键点；
