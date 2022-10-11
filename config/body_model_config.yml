@@ -1,0 +1,26 @@
+body_pose:
+  param_type: cont_rot_repr
+gender: neutral
+global_orient:
+  param_type: cont_rot_repr
+j14_regressor_path: data/SMPLX_to_J14.pkl
+jaw_pose:
+  param_type: cont_rot_repr
+left_hand_pose:
+  flat_hand_mean: false
+  num_pca_comps: 12
+  param_type: cont_rot_repr
+mean_pose_path: data/all_means.pkl
+model_folder: data/models/
+num_betas: 10
+num_expression_coeffs: 10
+right_hand_pose:
+  flat_hand_mean: false
+  num_pca_comps: 12
+  param_type: cont_rot_repr
+shape_mean_path: data/shape_mean.npy
+type: smplx
+use_compressed: true
+use_face_contour: true
+use_face_keypoints: true
+use_feet_keypoints: true

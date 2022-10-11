@@ -1,0 +1,11 @@
+perspective:
+  focal_length: 5000
+  regress_focal_length: False
+  regress_rotation: False
+  regress_translation: False
+pos_func: softplus
+type: weak-persp
+weak_persp:
+  mean_scale: 0.9
+  regress_scale: True
+  regress_translation: True
