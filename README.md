@@ -35,7 +35,23 @@ generator/data_generator_human36m.py
 generator/data_generator_human36m_smplx_creator.py
 ```
 
+## 4、开源算法在不同数据集上的指标
 
+| 编号 | 开源算法  |  开源数据集  |  MPJPE   | PA-MPJPE | 备注 |
+| :--: | :-------: | :----------: | :------: | :------: | :--: |
+|  1   | mediapipe |  human3.6m   | 1434.12  |  83.14   |      |
+|  2   | mediapipe |     3DPW     | 4110.20  |  89.53   |      |
+|  3   | mediapipe |    humman    | 2213.53  |  103.09  |      |
+|  4   | mediapipe | MPI_INF_3DHP | 1708.89  |  104.48  |      |
+|  5   | mediapipe |    MSCOCO    | 29521.84 |  122.44  |      |
+|  6   | mediapipe |     MPII     | 32846.84 |  112.21  |      |
 
+## 5、我们算法的指标
 
+| 编号 |     部位     | MPJPE | PA-MPJPE | 备注 |
+| :--: | :----------: | :---: | :------: | :--: |
+|  1   |     左手     | 18.78 |   7.72   |      |
+|  2   |     右手     | 18.59 |   7.67   |      |
+|  3   | 人体（全身） | 9.97  |   8.02   |      |
+|  4   | 人体（半身） | 11.50 |   7.98   |      |
 
