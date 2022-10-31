@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 '''
-    带时序的数据集
+    单帧的数据集
 '''
 class Keypoint_Dataset(Dataset):
     def __init__(self, data_path, label_path):
@@ -36,24 +36,17 @@ class Keypoint_Dataset(Dataset):
         curr_data[:, 0] = (curr_data[:, 0] - min_width) / curr_width
         curr_data[:, 1] = (curr_data[:, 1] - min_height) / curr_height
 
+        # 对于输入数据，做成相对于左髋的相对值
+        left_hip_data = curr_data[23]
+        curr_data[:, 0] = curr_data[:, 0] - left_hip_data[0]
+        curr_data[:, 1] = curr_data[:, 1] - left_hip_data[1]
+
         # # 归一化之后可视化下看对不对
         # xp = curr_data.T[0].T
         # yp = curr_data.T[1].T
         # plot_line_chart_part_2d(xp, yp, "%s_2d" % (index), mode='label')
 
-        # 对于标签，将人移到原点附近（两髋关节的中心点为原点）
-        left_hip = curr_label[23]
-        right_hip = curr_label[24]
-
-        center_x = (left_hip[0] + right_hip[0]) / 2.0
-        center_y = (left_hip[1] + right_hip[1]) / 2.0
-        center_z = (left_hip[2] + right_hip[2]) / 2.0
-
-        # 将人移到中心
-        curr_label[:, 0] = curr_label[:, 0] - center_x
-        curr_label[:, 1] = curr_label[:, 1] - center_y
-        curr_label[:, 2] = curr_label[:, 2] - center_z
-
+        # 对于标签，先做归一化，再将人移到原点
         # 对3d关键点做归一化
         min_x = np.min(curr_label[:, 0])
         min_y = np.min(curr_label[:, 1])
@@ -67,12 +60,18 @@ class Keypoint_Dataset(Dataset):
             curr_x = 1.0
         if float(curr_y) == 0.0:
             curr_y = 1.0
-        if float(curr_z) == 0:
+        if float(curr_z) == 0.0:
             curr_z = 1.0
 
         curr_label[:, 0] = (curr_label[:, 0] - min_x) / curr_x
         curr_label[:, 1] = (curr_label[:, 1] - min_y) / curr_y
         curr_label[:, 2] = (curr_label[:, 2] - min_z) / curr_z
+
+        # 将人移到原点
+        left_hip_label = curr_label[23]
+        curr_label[:, 0] = curr_label[:, 0] - left_hip_label[0]
+        curr_label[:, 1] = curr_label[:, 1] - left_hip_label[1]
+        curr_label[:, 2] = curr_label[:, 2] - left_hip_label[2]
 
         # # 可视化看下对不对
         # xp = curr_label.T[0].T
@@ -89,11 +88,12 @@ class Keypoint_Dataset(Dataset):
 
 if __name__ == '__main__':
     root_path = "./data/"
-    train_dataset = Keypoint_Dataset(root_path + "data_train.npy", label_path=root_path + "label_train.npy")
-    train_dataloader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+    batch_size = 1024
+    # train_dataset = Keypoint_Dataset(root_path + "data_train.npy", label_path=root_path + "label_train.npy")
+    # train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     val_dataset = Keypoint_Dataset(root_path + "data_val.npy", label_path=root_path + "label_val.npy")
-    val_dataloader = DataLoader(val_dataset, batch_size=256, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
     for idx, (data, label) in enumerate(val_dataloader):
         print(idx, data.shape, label.shape)

@@ -75,3 +75,28 @@ mp_body_dict['hip'] = ['left_hip', 'right_hip']
 # mp_smplx_dict['right_eye'] = ['right_eye_inner', 'right_eye', 'right_eye_outer']
 
 
+## 半身可视化
+mp_halfbody_dict = {}
+# 横着连线
+mp_halfbody_dict['left_arm'] = ['left_shoulder', 'left_elbow', 'left_wrist']
+mp_halfbody_dict['right_arm'] = ['right_shoulder', 'right_elbow', 'right_wrist']
+
+# mp_smplx_dict['left_pinky'] = ['left_wrist', 'left_pinky']
+# mp_smplx_dict['left_index'] = ['left_wrist', 'left_index']
+# mp_smplx_dict['left_thumb'] = ['left_wrist', 'left_thumb']
+#
+# mp_smplx_dict['right_pinky'] = ['right_wrist', 'right_pinky']
+# mp_smplx_dict['right_index'] = ['right_wrist', 'right_index']
+# mp_smplx_dict['right_thumb'] = ['right_wrist', 'right_thumb']
+
+
+# 横着连线
+mp_halfbody_dict['shoulder'] = ['left_shoulder', 'right_shoulder']
+
+# # 头部
+# mp_smplx_dict['mouth'] = ['mouth_left', 'mouth_right']
+# mp_smplx_dict['left_ear'] = ['left_ear']
+# mp_smplx_dict['right_ear'] = ['right_ear']
+# mp_smplx_dict['nose'] = ['nose']
+# mp_smplx_dict['left_eye'] = ['left_eye_inner', 'left_eye', 'left_eye_outer']
+# mp_smplx_dict['right_eye'] = ['right_eye_inner', 'right_eye', 'right_eye_outer']

@@ -4,9 +4,9 @@ from tqdm import tqdm
 import torch.nn.parallel
 import numpy as np
 
-from model_body import SimpleBaseline as BodyModel
-from model_lefthand import SimpleBaseline as LefthandModel
-from model_righthand import SimpleBaseline as RighthandModel
+from model_single_frame import SimpleBaseline as BodyModel
+from model_single_frame import SimpleBaseline as LefthandModel
+from model_single_frame import SimpleBaseline as RighthandModel
 from vis_label import plot_full_body, plot_body, plot_hand
 
 '''
@@ -17,7 +17,7 @@ from vis_label import plot_full_body, plot_body, plot_hand
 
 root_path = "./data/"
 
-username = "fanzhaoxin"
+username = "zhangsan"
 
 keypoint2d_hand = np.load("D:/dataset/lifter_dataset/inference_data/%s_hand_smplx.npy" % username)    # 左右手
 keypoint2d_body = np.load("D:/dataset/lifter_dataset/inference_data/%s_body_mp.npy" % username)    # 人体
@@ -28,7 +28,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 body_model = BodyModel(input_dim=33 * 2, out_dim=33 * 3)
 body_model.to(device)
 
-checkpoint_body = torch.load(os.path.join(root_path, "checkpoint20221021/body_197_loss_148.711475_78.878653.pt"), map_location=device)
+checkpoint_body = torch.load(os.path.join(root_path, "checkpoint20221027_humman/body_198_loss_9.969544_8.024396.pt"), map_location=device)
 body_model.load_state_dict(checkpoint_body['model_state'])
 body_model.eval()
 
@@ -36,7 +36,7 @@ body_model.eval()
 lefthand_model = LefthandModel(input_dim=21*2, out_dim=21*3)
 lefthand_model.to(device)
 
-checkpoint_lefthand = torch.load(os.path.join(root_path, "D:/workspace/workspace_python/lifter_hand_left/data/checkpoint20221021/lefthand_181_loss_0.037327_26.498532.pt"), map_location=device)
+checkpoint_lefthand = torch.load(os.path.join(root_path, "D:/workspace/workspace_python/lifter_hand_left/data/checkpoint20221024/lefthand_186_loss_0.018778_7.723939.pt"), map_location=device)
 lefthand_model.load_state_dict(checkpoint_lefthand['model_state'])
 lefthand_model.eval()
 lefthand_joint_index = [20, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 66, 67, 68, 69, 70]
@@ -45,7 +45,7 @@ lefthand_joint_index = [20, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 
 righthand_model = RighthandModel(input_dim=21*2, out_dim=21*3)
 righthand_model.to(device)
 
-checkpoint_righthand = torch.load(os.path.join(root_path, "D:/workspace/workspace_python/lifter_hand_right/data/checkpoint20221021/righthand_181_loss_0.037298_26.458579.pt"), map_location=device)
+checkpoint_righthand = torch.load(os.path.join(root_path, "D:/workspace/workspace_python/lifter_hand_right/data/checkpoint20221024/righthand_186_loss_0.018590_7.666696.pt"), map_location=device)
 righthand_model.load_state_dict(checkpoint_righthand['model_state'])
 righthand_model.eval()
 righthand_joint_index = [21, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 71, 72, 73, 74, 75]  # 手指指尖也要
@@ -68,6 +68,22 @@ for i in tqdm(range(keypoint2d_hand.shape[0])):
 
     body_input = body_data
 
+    # 左右手部分，先归一化
+    min_width = np.min(hand_data[:, 0])
+    min_height = np.min(hand_data[:, 1])
+
+    width = np.max(hand_data[:, 0]) - np.min(hand_data[:, 0])
+    height = np.max(hand_data[:, 1]) - np.min(hand_data[:, 1])
+
+    if float(width) == 0.0:
+        width = 1.0
+    if float(height) == 0.0:
+        height = 1.0
+
+    hand_data[:, 0] = (hand_data[:, 0] - min_width) / width
+    hand_data[:, 1] = (hand_data[:, 1] - min_height) / height
+
+    # 再拆分出左右手的
     for j in range(144):
         if j in lefthand_joint_index:
             lefthand_input.append(hand_data[j])
@@ -93,6 +109,11 @@ for i in tqdm(range(keypoint2d_hand.shape[0])):
     body_input[:, 0] = (body_input[:, 0] - body_min_width) / body_width
     body_input[:, 1] = (body_input[:, 1] - body_min_height) / body_height
 
+    # 对于人体部分，做成相对于左髋的相对值
+    left_hip_data = body_input[23]
+    body_input[:, 0] = body_input[:, 0] - left_hip_data[0]
+    body_input[:, 1] = body_input[:, 1] - left_hip_data[1]
+
     body_input = body_input.flatten()
 
     body_input = torch.tensor(body_input).unsqueeze(0)
@@ -103,20 +124,10 @@ for i in tqdm(range(keypoint2d_hand.shape[0])):
     pred_body = pred_body.view(-1, 3)
     pred_body = pred_body.detach().cpu().numpy()
 
-    # 3.左手
-    lefthand_min_width = np.min(lefthand_input[:, 0])
-    lefthand_min_height = np.min(lefthand_input[:, 1])
-
-    lefthand_width = np.max(lefthand_input[:, 0]) - np.min(lefthand_input[:, 0])
-    lefthand_height = np.max(lefthand_input[:, 1]) - np.min(lefthand_input[:, 1])
-
-    if float(lefthand_width) == 0.0:
-        lefthand_width = 1.0
-    if float(lefthand_height) == 0.0:
-        lefthand_height = 1.0
-
-    lefthand_input[:, 0] = (lefthand_input[:, 0] - lefthand_min_width) / lefthand_width
-    lefthand_input[:, 1] = (lefthand_input[:, 1] - lefthand_min_height) / lefthand_height
+    # 3.左手（每个点相对于手腕的差值）
+    left_wrist = hand_data[20]  # 左手手腕
+    lefthand_input[:, 0] = lefthand_input[:, 0] - left_wrist[0]
+    lefthand_input[:, 1] = lefthand_input[:, 1] - left_wrist[1]
 
     lefthand_input = lefthand_input.flatten()
 
@@ -129,19 +140,9 @@ for i in tqdm(range(keypoint2d_hand.shape[0])):
     pred_lefthand = pred_lefthand.detach().cpu().numpy()
 
     # 4.右手
-    righthand_min_width = np.min(righthand_input[:, 0])
-    righthand_min_height = np.min(righthand_input[:, 1])
-
-    righthand_width = np.max(righthand_input[:, 0]) - np.min(righthand_input[:, 0])
-    righthand_height = np.max(righthand_input[:, 1]) - np.min(righthand_input[:, 1])
-
-    if float(righthand_width) == 0.0:
-        righthand_width = 1.0
-    if float(righthand_height) == 0.0:
-        righthand_height = 1.0
-
-    righthand_input[:, 0] = (righthand_input[:, 0] - righthand_min_width) / righthand_width
-    righthand_input[:, 1] = (righthand_input[:, 1] - righthand_min_height) / righthand_height
+    right_wrist = hand_data[21]  # 右手手腕
+    righthand_input[:, 0] = righthand_input[:, 0] - right_wrist[0]
+    righthand_input[:, 1] = righthand_input[:, 1] - right_wrist[1]
 
     righthand_input = righthand_input.flatten()
 
@@ -177,7 +178,7 @@ for i in tqdm(range(keypoint2d_hand.shape[0])):
     pred_righthand[:, 1] = pred_righthand[:, 1] - right_wrist[1]
     pred_righthand[:, 2] = pred_righthand[:, 2] - right_wrist[2]
 
-    ### 单独可视化的画不用这一步
+    ### 单独可视化的话不用这一步
     # # # 5.将左手手腕移到人体的左手手腕处
     # left_body_wrist = pred_body[15]    # mediapipe中左手手腕的下标
     # left_wrist = pred_lefthand[0]
@@ -209,7 +210,6 @@ for i in tqdm(range(keypoint2d_hand.shape[0])):
 
     final_hand_output_list.append(final_output)
     final_body_output_list.append(pred_body)
-
 
     # 8.可视化
     # plot_full_body(pred_body, final_output, "./output/%s_%d_3d.png" % (username, i), mode='pred')
